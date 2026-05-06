@@ -17,9 +17,9 @@ install: ## Install production PHP dependencies and prepare .env
       	echo "Creating .env from .env.example"; \
       	cp src/.env.example src/.env; \
     fi
-	docker compose run --rm composer sh -c "composer install --dev" /
-	docker compose run --rm php sh -c "php artisan key:generate" /
 	make up /
+	docker compose exec php sh -c "php artisan key:generate" /
+	docker compose run --rm composer sh -c "composer install --dev" /
 	make wait-db /
 	make migrate /
 	make tests
