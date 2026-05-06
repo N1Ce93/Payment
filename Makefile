@@ -17,7 +17,7 @@ install: ## Install production PHP dependencies and prepare .env
       	echo "Creating .env from .env.example"; \
       	cp src/.env.example src/.env; \
     fi
-	docker compose run --rm composer sh -c "composer install --no-cache" /
+	docker compose run --rm composer sh -c "composer install --dev" /
 	docker compose run --rm php sh -c "php artisan key:generate" /
 	make up /
 	make wait-db /
@@ -26,7 +26,7 @@ install: ## Install production PHP dependencies and prepare .env
 	make psr
 
 migrate: ## Run migrate command in the container.
-	docker compose run --rm php sh -c "php artisan migrate --force"
+	docker compose exec php sh -c "php artisan migrate --force"
 
 up: ## Start all Docker services in detached mode, forcing recreation of containers.
 	docker compose up -d
