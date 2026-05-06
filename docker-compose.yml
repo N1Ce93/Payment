@@ -43,7 +43,7 @@ services:
     image: "mysql:8.4"
     container_name: "db"
     environment:
-        MYSQL_DATABASE: payment
+        MYSQL_DATABASE: database
         MYSQL_ROOT_PASSWORD: root
         MYSQL_AUTHENTICATION_PLUGIN: mysql_native_password
     volumes:

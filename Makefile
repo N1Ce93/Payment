@@ -20,8 +20,10 @@ install: ## Install production PHP dependencies and prepare .env
 	docker compose run --rm composer sh -c "composer install --no-cache" /
 	docker compose run --rm php sh -c "php artisan key:generate" /
 	make up /
+	make wait-db /
 	make migrate /
 	make tests
+	make psr
 
 migrate: ## Run migrate command in the container.
 	docker compose run --rm php sh -c "php artisan migrate --force"
@@ -34,3 +36,13 @@ down: ## Stop and remove Docker containers, networks, and orphans.
 
 tests:
 	docker compose exec php sh -c "./vendor/bin/phpunit --testdox"
+
+psr:
+	docker compose exec php sh -c "./vendor/bin/pint app --test"
+
+wait-db:
+	@echo "Waiting for database..."
+	@until docker compose exec db mysqladmin ping -h"127.0.0.1" --silent; do \
+		sleep 1; \
+	done
+	@echo "Database is ready"

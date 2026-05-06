@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Payments\Contracts\PaymentServiceContract;
+use App\Services\Payments\PaymentService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,12 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PaymentServiceContract::class, PaymentService::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         //
