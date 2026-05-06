@@ -1,46 +1,47 @@
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
 
-.PHONY: help build bash install install-dev up restart down run npm-build restart-queue npm-install
+.PHONY: help install up down migrate tests psr wait-db bash-php
 
-help: ## Display this help message with descriptions of all available Makefile targets.
+help: ## Display available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(THIS_FILE) | \
-    awk 'BEGIN {FS = ":.*?## "}; {printf "\033[33m%-20s\033[0m %s\n", $$1, $$2}'
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[33m%-20s\033[0m %s\n", $$1, $$2}'
 
-bash-php: ## Start a Bash shell session inside the 'php' container.
-	docker compose run --rm php bash
-
-bash-composer: ## Start a Bash shell session inside the 'composer' container.
-	docker compose run --rm composer bash
-
-install: ## Install production PHP dependencies and prepare .env
+install: ## Install and prepare project
 	@if [ ! -f src/.env ]; then \
-      	echo "Creating .env from .env.example"; \
-      	cp src/.env.example src/.env; \
-    fi
-	make up /
-	docker compose exec php sh -c "php artisan key:generate" /
-	docker compose run --rm composer sh -c "composer install --dev" /
-	make wait-db /
-	make migrate /
+		echo "Creating .env from .env.example"; \
+		cp src/.env.example src/.env; \
+	fi
+
+	make up
+	make wait-db
+
+	docker compose run --rm composer composer install
+
+	docker compose run --rm php php artisan key:generate
+	docker compose run --rm php php artisan migrate --force
+
 	make tests
 	make psr
 
-migrate: ## Run migrate command in the container.
-	docker compose exec php sh -c "php artisan migrate --force"
-
-up: ## Start all Docker services in detached mode, forcing recreation of containers.
+up: ## Start containers
 	docker compose up -d
 
-down: ## Stop and remove Docker containers, networks, and orphans.
+down: ## Stop containers
 	docker compose down
 
-tests:
-	docker compose exec php sh -c "./vendor/bin/phpunit --testdox"
+migrate: ## Run migrations
+	docker compose run --rm php php artisan migrate --force
 
-psr:
-	docker compose exec php sh -c "./vendor/bin/pint app --test"
+tests: ## Run tests
+	docker compose run --rm php ./vendor/bin/phpunit --testdox
 
-wait-db:
+psr: ## Run Laravel Pint
+	docker compose run --rm php ./vendor/bin/pint app --test
+
+bash-php: ## Open bash inside php container
+	docker compose run --rm php bash
+
+wait-db: ## Wait until MySQL is ready
 	@echo "Waiting for database..."
 	@until docker compose exec db mysqladmin ping -h"127.0.0.1" --silent; do \
 		sleep 1; \
