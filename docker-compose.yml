@@ -1,0 +1,56 @@
+services:
+  web:
+    image: "caddy:2.9-alpine"
+    container_name: "web"
+    restart: unless-stopped
+    working_dir: "/app"
+    ports:
+      - "80:80"
+    volumes:
+      - "./docker/caddy/Caddyfile:/etc/caddy/Caddyfile"
+      - "./src:/app"
+    networks:
+      - payment
+
+  php:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: "php"
+    working_dir: "/app"
+    environment:
+      - "DB_HOST=db"
+    user: "1000:1000"
+    volumes:
+      - "./src:/app"
+      - "./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini"
+    networks:
+      - payment
+
+  composer:
+    image: "composer:2"
+    container_name: "composer"
+    working_dir: "/app"
+    user: "1000:1000"
+    volumes:
+      - "./src:/app"
+    networks:
+      - payment
+
+  db:
+    restart: unless-stopped
+    image: "mysql:8.4"
+    container_name: "db"
+    environment:
+        MYSQL_DATABASE: payment
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_AUTHENTICATION_PLUGIN: mysql_native_password
+    volumes:
+      - "./.mysql:/var/lib/mysql"
+    networks:
+      - payment
+
+networks:
+  payment:
+    name: "payment"
